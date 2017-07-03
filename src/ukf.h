@@ -28,6 +28,7 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
+  
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
 
@@ -77,6 +78,14 @@ public:
    * Destructor
    */
   virtual ~UKF();
+    
+  void AugmentedSigmaPoints(MatrixXd *Xsig_out);
+  void SigmaPointPrediction(MatrixXd *Xsig_out,double delt_t);
+  void PredictMeanAndCovariance();
+  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
+  void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out);
+  void UpdateState(VectorXd* z_out, MatrixXd* S_out,MeasurementPackage meas_package);
+
 
   /**
    * ProcessMeasurement
