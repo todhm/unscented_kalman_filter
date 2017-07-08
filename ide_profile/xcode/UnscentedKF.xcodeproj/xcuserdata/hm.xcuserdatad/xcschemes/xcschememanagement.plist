@@ -19,6 +19,11 @@
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
+		<key>unitest.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
@@ -28,6 +33,11 @@
 			<true/>
 		</dict>
 		<key>7F81D91EE6824ABC9BA014DD</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>86EE50151F0C3CEA00B94ADB</key>
 		<dict>
 			<key>primary</key>
 			<true/>

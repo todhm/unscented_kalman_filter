@@ -67,6 +67,8 @@ public:
 
   ///* Sigma point spreading parameter
   double lambda_;
+    
+  VectorXd Nis_vec;
 
 
   /**
@@ -82,9 +84,9 @@ public:
   void AugmentedSigmaPoints(MatrixXd *Xsig_out);
   void SigmaPointPrediction(MatrixXd *Xsig_out,double delt_t);
   void PredictMeanAndCovariance();
-  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
-  void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out);
-  void UpdateState(VectorXd* z_out, MatrixXd* S_out,MeasurementPackage meas_package);
+  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig);
+  void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig);
+  void UpdateState(VectorXd* z_out,MatrixXd* Zsig, MatrixXd* S_out,MeasurementPackage meas_package);
 
 
   /**
