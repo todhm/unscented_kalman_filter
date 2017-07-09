@@ -68,7 +68,10 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
     
-  VectorXd Nis_vec;
+  VectorXd Nis_radar_vec;
+    
+  VectorXd Nis_laser_vec;
+
 
 
   /**
