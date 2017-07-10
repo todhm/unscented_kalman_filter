@@ -68,6 +68,11 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
     
+    
+  // Measurement Matrix of laser sensor.
+    
+  MatrixXd H_laser_;
+    
   VectorXd Nis_radar_vec;
     
   VectorXd Nis_laser_vec;
@@ -90,7 +95,7 @@ public:
   void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig);
   void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig);
   void UpdateState(VectorXd* z_out,MatrixXd* Zsig, MatrixXd* S_out,MeasurementPackage meas_package);
-
+  void Update(MeasurementPackage meas_package);
 
   /**
    * ProcessMeasurement
@@ -104,6 +109,8 @@ public:
    * @param delta_t Time between k and k+1 in s
    */
   void Prediction(double delta_t);
+    
+  void PredictLidar(double delta_t);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement

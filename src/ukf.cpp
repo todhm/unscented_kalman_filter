@@ -76,6 +76,11 @@ UKF::UKF(){
     weights_(i) = weight;
   }
   
+  //Measurement matrix laser
+  H_laser_ = MatrixXd::Zero(2, 5);
+  H_laser_(0,0) = 1;
+  H_laser_(1,1) = 1;
+  
   //(2,1)Vector to be used for NIS CHECK (number of total NIS checked, NIS value exeed 95%)
   Nis_radar_vec = VectorXd::Zero(2);
   Nis_laser_vec = VectorXd::Zero(2);
@@ -174,12 +179,32 @@ void UKF::PredictMeanAndCovariance(){
 
 //Function to predict mean and covaraince state by generating and predict sigmapoints.
 void UKF::Prediction(double delta_t){
+
   MatrixXd Xsig = MatrixXd::Zero(n_aug_, n_aug_*2 + 1);
   UKF::AugmentedSigmaPoints(&Xsig);
   UKF::SigmaPointPrediction(&Xsig ,delta_t);
   UKF::PredictMeanAndCovariance();
   
  }
+
+void UKF::PredictLidar(double delta_t){
+  MatrixXd F_ = MatrixXd::Identity(4,4);
+  F_(0,3) = delta_t;
+  F_(1,3) = delta_t;
+  double ax =9.0;
+  double ay =9.0;
+  //Update process covariance matrix with time differential
+  MatrixXd Q = MatrixXd(4,4);
+  Q << pow(delta_t,4)/4 * ax, 0, pow(delta_t,3) /2 * ax, 0,
+  0, pow(delta_t,4)/4 * ay, 0, pow(delta_t,3) /2 *ay,
+  ax * pow(delta_t,3)/2 , 0, ax *pow(delta_t,2), 0 ,
+  0, pow(delta_t,3)/2 * ay, 0, pow(delta_t,2) * ay;
+  
+  x_ = F_ * x_ ;
+  MatrixXd Ft = F_.transpose();
+  P_ = F_ * P_ * Ft + Q;
+}
+
 
 //Function to Predict measurement, sigmapoint and measurement covaraince at t+1 of radar sensor .
 void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* Zsig, MatrixXd* S_out){
@@ -251,6 +276,34 @@ void UKF::PredictLidarMeasurement(VectorXd* z_out,MatrixXd* Zsig ,MatrixXd* S_ou
 
 }
 
+void UKF::Update(MeasurementPackage meas_package) {
+  VectorXd z = meas_package.raw_measurements_;
+  VectorXd y = z - H_laser_ * x_;
+  
+  MatrixXd R = MatrixXd::Zero(2,2);
+  R(0,0) = std_laspx_;
+  R(1,1) = std_laspy_ ;
+  
+  MatrixXd S = H_laser_ * P_ * H_laser_.transpose() + R;
+  MatrixXd K = P_ * H_laser_.transpose() * S.inverse();
+  
+  x_ = x_ +(K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K*H_laser_) * P_;
+  
+  double NIS_laser_ = y.transpose() * S.inverse() * y;
+  Nis_laser_vec(0) += 1;
+  
+  if(NIS_laser_ > 5.991){
+    Nis_laser_vec(1) += 1;
+  }
+  cout<<"NIS laser: "<<NIS_laser_<<endl;
+  cout<<"NIS laser Percent: " <<Nis_laser_vec(1) / Nis_laser_vec(0)<<endl;
+
+  
+}
+
 //Function to update state .
 void UKF::UpdateState(VectorXd* z_out,MatrixXd* Zsig, MatrixXd* S_out,MeasurementPackage meas_package){
   VectorXd measurement = meas_package.raw_measurements_;
@@ -303,6 +356,7 @@ void UKF::UpdateState(VectorXd* z_out,MatrixXd* Zsig, MatrixXd* S_out,Measuremen
     cout<<"NIS Radar Percent: " <<Nis_radar_vec(1) / Nis_radar_vec(0)<<endl;
 
   }
+  /**
   else if(meas_package.sensor_type_ == MeasurementPackage::LASER){
     double NIS_laser_;
     NIS_laser_ = zdiff_direct.transpose() * Spred.inverse() * zdiff_direct;
@@ -316,6 +370,7 @@ void UKF::UpdateState(VectorXd* z_out,MatrixXd* Zsig, MatrixXd* S_out,Measuremen
     cout<<"NIS laser Percent: " <<Nis_laser_vec(1) / Nis_laser_vec(0)<<endl;
     
   }
+  */
 
 }
 
@@ -344,8 +399,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   MatrixXd S;
   MatrixXd Zsig;
   VectorXd measurement = meas_package.raw_measurements_;
-  UKF::PredictLidarMeasurement(&z,&Zsig, &S);
-  UKF::UpdateState(&z,&Zsig,&S, meas_package );
+  UKF::Update(meas_package);
   
 }
 
@@ -400,9 +454,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       Prediction(dt);
       delta_t -= dt;
     }
+    
     UKF::Prediction(delta_t);
     
-
     
     if(meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_){
       UKF::UpdateLidar(meas_package);
